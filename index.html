@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="it" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0b0b0b" />
+    <title>Luna Lounge — Eleganza Minimal</title>
+    <meta name="description" content="Luna Lounge — spazio riservato. Eleganza, discrezione e un'esperienza utente mozzafiato con animazioni raffinate." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="./styles.css" />
+
+    <!-- GSAP + Plugins -->
+    <script defer src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
+    <!-- Lenis smooth scroll -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.41/bundled/lenis.min.js"></script>
+    <!-- SplitType for text animations -->
+    <script defer src="https://cdn.jsdelivr.net/npm/split-type@0.3.3/umd/index.min.js"></script>
+    <script defer src="./scripts.js"></script>
+  </head>
+  <body>
+    <noscript>
+      <div class="noscript">Per la migliore esperienza attiva JavaScript.</div>
+    </noscript>
+
+    <!-- Custom Cursor -->
+    <div class="cursor">
+      <div class="cursor-dot"></div>
+      <div class="cursor-ring"></div>
+    </div>
+
+    <!-- Preloader -->
+    <div class="preloader" aria-hidden="true">
+      <div class="preloader-track">
+        <span class="brand">Luna Lounge</span>
+        <span class="progress" id="preloaderProgress">0%</span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="site-header" role="banner">
+      <div class="container flex between center-v">
+        <a href="#home" class="brand headline split" aria-label="Home">
+          Luna Lounge
+        </a>
+        <nav class="nav" aria-label="Principale">
+          <a class="nav-link" href="#servizi">Servizi</a>
+          <a class="nav-link" href="#esperienza">Esperienza</a>
+          <a class="nav-link" href="#contatti">Contatti</a>
+          <a class="btn primary magnetic" href="#prenota">Prenota</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="home" class="site-main">
+      <!-- HERO -->
+      <section class="section hero" aria-label="Hero">
+        <div class="container">
+          <h1 class="display headline split">
+            Eleganza. Discrezione. Esperienze su misura.
+          </h1>
+          <p class="kicker" data-animate="fade-up" data-delay="0.2">
+            Un club privato dove il design incontra la riservatezza. Minimal nel look, massimo nella sensazione.
+          </p>
+          <div class="cta-group" data-animate="fade-up" data-delay="0.35">
+            <a class="btn primary magnetic" href="#servizi">Scopri i servizi</a>
+            <a class="btn ghost magnetic" href="#contatti">Contattaci</a>
+          </div>
+        </div>
+        <div class="blobs" aria-hidden="true">
+          <div class="blob b1" data-parallax data-speed="0.25"></div>
+          <div class="blob b2" data-parallax data-speed="0.45"></div>
+          <div class="blob b3" data-parallax data-speed="0.15"></div>
+        </div>
+      </section>
+
+      <!-- FILOSOFIA -->
+      <section class="section philosophy" aria-label="Filosofia">
+        <div class="container split">
+          <h2 class="h2 headline">La nostra filosofia</h2>
+          <p class="lead" data-animate="reveal-lines">
+            Spazi essenziali, luce calibrata, materiali nobili. Ogni dettaglio è pensato per lasciare che sia l'esperienza a parlare, con naturale fluidità.
+          </p>
+        </div>
+      </section>
+
+      <!-- SERVIZI -->
+      <section id="servizi" class="section services" aria-label="Servizi">
+        <div class="container">
+          <div class="section-head">
+            <h2 class="h2 headline split">Servizi su misura</h2>
+            <p class="kicker" data-animate="fade-up" data-delay="0.15">Qualità, riservatezza e cura maniacale.</p>
+          </div>
+          <div class="cards">
+            <article class="card" data-animate="card">
+              <h3 class="h3">Suite Private</h3>
+              <p>Ambienti raccolti, insonorizzati e curati nei minimi dettagli.</p>
+              <a href="#prenota" class="link magnetic">Prenota una suite</a>
+            </article>
+            <article class="card" data-animate="card" data-delay="0.1">
+              <h3 class="h3">Champagne Bar</h3>
+              <p>Selezione di etichette premium e mixology d'autore.</p>
+              <a href="#prenota" class="link magnetic">Scopri la lista</a>
+            </article>
+            <article class="card" data-animate="card" data-delay="0.2">
+              <h3 class="h3">Esperienze Private</h3>
+              <p>Servizi su misura, sempre con la massima discrezione.</p>
+              <a href="#prenota" class="link magnetic">Richiedi dettagli</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ESPERIENZA -->
+      <section id="esperienza" class="section experience" aria-label="Esperienza">
+        <div class="container two-col">
+          <div class="col sticky-col">
+            <h2 class="h2 headline split">Un flusso di emozioni</h2>
+            <p class="lead" data-animate="fade-up" data-delay="0.1">
+              Transizioni morbide, microinterazioni e una sensazione di scorrimento setosa. Ogni gesto è un invito a proseguire.
+            </p>
+            <a class="btn secondary magnetic" href="#contatti">Parla con noi</a>
+          </div>
+          <div class="col media-col">
+            <div class="gallery">
+              <div class="frame" data-animate="reveal" data-parallax data-speed="0.3"></div>
+              <div class="frame" data-animate="reveal" data-delay="0.1" data-parallax data-speed="0.2"></div>
+              <div class="frame" data-animate="reveal" data-delay="0.2" data-parallax data-speed="0.4"></div>
+              <div class="frame" data-animate="reveal" data-delay="0.3" data-parallax data-speed="0.25"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTATTI -->
+      <section id="contatti" class="section contact" aria-label="Contatti">
+        <div class="container two-col">
+          <div class="col">
+            <h2 class="h2 headline split">Contatti</h2>
+            <ul class="contact-list">
+              <li><span>Indirizzo</span> Via Riservata 00, Milano</li>
+              <li><span>Telefono</span> +39 02 0000 0000</li>
+              <li><span>Email</span> info@lunalounge.example</li>
+            </ul>
+          </div>
+          <div class="col">
+            <form class="form" action="#" method="post" onsubmit="return false">
+              <div class="row">
+                <label>
+                  <span>Nome</span>
+                  <input type="text" placeholder="Il tuo nome" required />
+                </label>
+                <label>
+                  <span>Email</span>
+                  <input type="email" placeholder="nome@email.com" required />
+                </label>
+              </div>
+              <label>
+                <span>Messaggio</span>
+                <textarea placeholder="Scrivi qui..." rows="4"></textarea>
+              </label>
+              <button class="btn primary magnetic" id="prenota">Invia</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+      <div class="container flex between center-v">
+        <p class="muted">© <span id="year"></span> Luna Lounge — Tutti i diritti riservati · 18+</p>
+        <div class="social">
+          <a class="nav-link" href="#">Instagram</a>
+          <a class="nav-link" href="#">X</a>
+          <a class="nav-link" href="#">Threads</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
