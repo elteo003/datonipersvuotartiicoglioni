@@ -200,54 +200,74 @@
 
       busy = true;
 
-      const r = document.createElement('span');
-      r.className = 'ripple';
-      r.style.left = x + 'px';
-      r.style.top = y + 'px';
-      r.style.animation = 'rippleWave 1.2s ease-out forwards';
-      ripplesLayer.appendChild(r);
+      const RINGS = 4; // multiple concentric waves for realism
+      const DURATION_BASE = 1.35;
+      const STAGGER = 0.12;
 
-      let cleanupCalled = false;
-      let failSafeId;
-      const onEnd = () => {
-        if (cleanupCalled) return;
-        cleanupCalled = true;
-        if (failSafeId) clearTimeout(failSafeId);
-        r.removeEventListener('animationend', onEnd);
-        r.remove();
-        // advance to next sentence
-        const nextIndex = (currentIndex + 1) % sentences.length;
-        const nextText = sentences[nextIndex];
-        if (window.gsap) {
-          window.gsap.to(quoteEl, {
-            yPercent: -20,
-            opacity: 0,
-            duration: 0.35,
-            ease: 'power3.in',
-            onComplete: () => {
-              quoteEl.textContent = nextText;
-              window.gsap.set(quoteEl, { yPercent: 20 });
-              window.gsap.to(quoteEl, {
-                yPercent: 0,
-                opacity: 1,
-                duration: 0.6,
-                ease: 'power3.out',
-                onComplete: () => {
-                  currentIndex = nextIndex;
-                  busy = false;
-                }
-              });
-            }
-          });
-        } else {
-          quoteEl.textContent = nextText;
-          currentIndex = nextIndex;
-          busy = false;
+      const rings = [];
+      for (let i = 0; i < RINGS; i++) {
+        const ring = document.createElement('span');
+        ring.className = 'ripple';
+        ring.style.left = x + 'px';
+        ring.style.top = y + 'px';
+        ring.style.animation = `rippleWave ${DURATION_BASE + i * 0.15}s ease-out ${i * STAGGER}s forwards`;
+        ring.style.opacity = String(Math.max(0.6, 0.9 - i * 0.15));
+        ripplesLayer.appendChild(ring);
+        rings.push(ring);
+      }
+
+      let ringsCompleted = 0;
+      const markOneDone = () => {
+        ringsCompleted += 1;
+        if (ringsCompleted >= rings.length) {
+          rings.forEach((el) => el.remove());
+          // advance to next sentence
+          const nextIndex = (currentIndex + 1) % sentences.length;
+          const nextText = sentences[nextIndex];
+          if (window.gsap) {
+            window.gsap.to(quoteEl, {
+              // words dissolve via wave: slight skew + mask-like yPercent
+              yPercent: -18,
+              opacity: 0,
+              skewY: 2,
+              duration: 0.45,
+              ease: 'power3.in',
+              onComplete: () => {
+                quoteEl.textContent = nextText;
+                window.gsap.set(quoteEl, { yPercent: 18, opacity: 0, skewY: -2 });
+                window.gsap.to(quoteEl, {
+                  yPercent: 0,
+                  opacity: 1,
+                  skewY: 0,
+                  duration: 0.7,
+                  ease: 'power3.out',
+                  onComplete: () => {
+                    currentIndex = nextIndex;
+                    busy = false;
+                  }
+                });
+              }
+            });
+          } else {
+            quoteEl.textContent = nextText;
+            currentIndex = nextIndex;
+            busy = false;
+          }
         }
       };
-      r.addEventListener('animationend', onEnd);
-      // Failsafe in case CSS animation is disabled and 'animationend' never fires
-      failSafeId = setTimeout(onEnd, 1400);
+
+      // Ensure cleanup if animationend does not fire
+      const failSafeId = setTimeout(() => {
+        rings.forEach((el) => el.remove());
+        markOneDone();
+      }, (DURATION_BASE + (RINGS - 1) * 0.15 + STAGGER + 0.3) * 1000);
+
+      rings.forEach((el) => {
+        el.addEventListener('animationend', () => {
+          el.remove();
+          markOneDone();
+        }, { once: true });
+      });
     };
 
     section.addEventListener('pointerdown', (e) => {
