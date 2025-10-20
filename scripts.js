@@ -218,6 +218,62 @@
     section.addEventListener('pointerdown', (e) => {
       triggerRipple(e.clientX, e.clientY);
     });
+
+    // Droplet fall-in + auto ripple on enter viewport
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (window.gsap && window.ScrollTrigger && !reduceMotion) {
+      const droplet = document.createElement('span');
+      droplet.className = 'droplet';
+      droplet.setAttribute('aria-hidden', 'true');
+      ripplesLayer.appendChild(droplet);
+
+      const tl = window.gsap.timeline({ paused: true });
+      // Start above section center and fall down with gravity-like ease
+      tl.set(droplet, {
+        x: () => section.getBoundingClientRect().width * 0.5,
+        y: -60,
+        scale: 1,
+        opacity: 0,
+      })
+      .to(droplet, {
+        opacity: 1,
+        duration: 0.2,
+        ease: 'power1.out'
+      })
+      .to(droplet, {
+        y: () => section.getBoundingClientRect().height * 0.45,
+        duration: 0.9,
+        ease: 'power2.in'
+      })
+      // impact: quick squash-stretch and then hide
+      .to(droplet, {
+        scaleX: 1.2,
+        scaleY: 0.7,
+        duration: 0.08,
+        ease: 'power1.in'
+      })
+      .to(droplet, {
+        scaleX: 0.9,
+        scaleY: 1.1,
+        duration: 0.12,
+        ease: 'power1.out'
+      })
+      .to(droplet, { opacity: 0, duration: 0.15 }, '>-0.05')
+      // trigger ripple at impact position
+      .add(() => {
+        const rect = section.getBoundingClientRect();
+        const cx = rect.left + rect.width * 0.5;
+        const cy = rect.top + rect.height * 0.45;
+        triggerRipple(cx, cy);
+      }, '>-0.1');
+
+      window.ScrollTrigger.create({
+        trigger: section,
+        start: 'top 70%',
+        once: true,
+        onEnter: () => tl.play()
+      });
+    }
   }
 
   // Floating blobs subtle wandering
