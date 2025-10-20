@@ -161,6 +161,9 @@
     const ripplesLayer = section ? section.querySelector('.philosophy-ripples') : null;
     if (!section || !quoteEl || !source || !ripplesLayer) return;
 
+    // Respect reduced motion while still providing discrete, non-animated feedback
+    const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
     const raw = (source.textContent || '').replace(/\s+/g, ' ').trim();
     const sentences = (raw.match(/[^.!?]+[.!?]/g) || [raw])
       .map((s) => s.trim())
@@ -173,10 +176,29 @@
     let busy = false;
     const triggerRipple = (clientX, clientY) => {
       if (busy) return;
-      busy = true;
       const rect = section.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
+
+      // Reduced motion: provide discrete, non-animated feedback and advance text
+      if (prefersReducedMotion) {
+        const indicator = document.createElement('span');
+        indicator.className = 'ripple-indicator';
+        indicator.style.left = x + 'px';
+        indicator.style.top = y + 'px';
+        ripplesLayer.appendChild(indicator);
+
+        const nextIndex = (currentIndex + 1) % sentences.length;
+        const nextText = sentences[nextIndex];
+        quoteEl.textContent = nextText;
+        currentIndex = nextIndex;
+
+        // Remove indicator shortly without relying on CSS animation
+        setTimeout(() => indicator.remove(), 180);
+        return;
+      }
+
+      busy = true;
 
       const r = document.createElement('span');
       r.className = 'ripple';
@@ -185,7 +207,12 @@
       r.style.animation = 'rippleWave 1.2s ease-out forwards';
       ripplesLayer.appendChild(r);
 
+      let cleanupCalled = false;
+      let failSafeId;
       const onEnd = () => {
+        if (cleanupCalled) return;
+        cleanupCalled = true;
+        if (failSafeId) clearTimeout(failSafeId);
         r.removeEventListener('animationend', onEnd);
         r.remove();
         // advance to next sentence
@@ -200,10 +227,16 @@
             onComplete: () => {
               quoteEl.textContent = nextText;
               window.gsap.set(quoteEl, { yPercent: 20 });
-              window.gsap.to(quoteEl, { yPercent: 0, opacity: 1, duration: 0.6, ease: 'power3.out', onComplete: () => {
-                currentIndex = nextIndex;
-                busy = false;
-              }});
+              window.gsap.to(quoteEl, {
+                yPercent: 0,
+                opacity: 1,
+                duration: 0.6,
+                ease: 'power3.out',
+                onComplete: () => {
+                  currentIndex = nextIndex;
+                  busy = false;
+                }
+              });
             }
           });
         } else {
@@ -213,6 +246,8 @@
         }
       };
       r.addEventListener('animationend', onEnd);
+      // Failsafe in case CSS animation is disabled and 'animationend' never fires
+      failSafeId = setTimeout(onEnd, 1400);
     };
 
     section.addEventListener('pointerdown', (e) => {
@@ -220,8 +255,7 @@
     });
 
     // Droplet fall-in + auto ripple on enter viewport
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (window.gsap && window.ScrollTrigger && !reduceMotion) {
+    if (window.gsap && window.ScrollTrigger && !prefersReducedMotion) {
       const droplet = document.createElement('span');
       droplet.className = 'droplet';
       droplet.setAttribute('aria-hidden', 'true');
