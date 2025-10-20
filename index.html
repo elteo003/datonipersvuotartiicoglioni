@@ -31,6 +31,7 @@
     <!-- Custom Cursor -->
     <div class="cursor">
       <div class="cursor-dot"></div>
+      <div class="cursor-crown"></div>
       <div class="cursor-ring"></div>
     </div>
 
@@ -83,10 +84,15 @@
       <section class="section philosophy" aria-label="Filosofia">
         <div class="container split">
           <h2 class="h2 headline">La nostra filosofia</h2>
-          <p class="lead" data-animate="reveal-lines">
+          <!-- Sorgente frasi originale (nascosta ma presente per l'estrazione) -->
+          <p id="philosophySource" class="lead" hidden aria-hidden="true">
             Spazi essenziali, luce calibrata, materiali nobili. Ogni dettaglio è pensato per lasciare che sia l'esperienza a parlare, con naturale fluidità.
           </p>
+          <!-- Frase singola, grande, cinematografica -->
+          <div id="philosophyQuote" class="philosophy-quote display" role="status" aria-live="polite"></div>
         </div>
+        <!-- Layer per effetto ripple su click/tap -->
+        <div class="philosophy-ripples" aria-hidden="true"></div>
       </section>
 
       <!-- SERVIZI -->

@@ -117,11 +117,13 @@
   function setupCursor() {
     const cursor = document.querySelector('.cursor');
     const dot = document.querySelector('.cursor-dot');
+    const crown = document.querySelector('.cursor-crown');
     const ring = document.querySelector('.cursor-ring');
     if (!cursor || !dot || !ring) return;
 
     let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
     let ringX = mouseX, ringY = mouseY;
+    let crownX = mouseX, crownY = mouseY;
 
     const move = (e) => { mouseX = e.clientX; mouseY = e.clientY; };
     window.addEventListener('mousemove', move, { passive: true });
@@ -131,12 +133,90 @@
       ringX += (mouseX - ringX) * 0.15;
       ringY += (mouseY - ringY) * 0.15;
       gsap.set(ring, { x: ringX, y: ringY });
+      if (crown) {
+        crownX += (mouseX - crownX) * 0.2;
+        crownY += (mouseY - crownY) * 0.2;
+        gsap.set(crown, { x: crownX, y: crownY });
+      }
     });
 
     const interactive = 'a, button, .btn, .link, input, textarea, label';
     document.querySelectorAll(interactive).forEach((el) => {
-      el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 1.6, duration: 0.2 }));
-      el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, duration: 0.2 }));
+      el.addEventListener('mouseenter', () => {
+        gsap.to(ring, { scale: 1.6, duration: 0.2 });
+        if (crown) gsap.to(crown, { scale: 1.3, duration: 0.2 });
+      });
+      el.addEventListener('mouseleave', () => {
+        gsap.to(ring, { scale: 1, duration: 0.2 });
+        if (crown) gsap.to(crown, { scale: 1, duration: 0.2 });
+      });
+    });
+  }
+
+  // Philosophy ripple + rotating quotes
+  function setupPhilosophy() {
+    const section = document.querySelector('.philosophy');
+    const quoteEl = document.getElementById('philosophyQuote');
+    const source = document.getElementById('philosophySource');
+    const ripplesLayer = section ? section.querySelector('.philosophy-ripples') : null;
+    if (!section || !quoteEl || !source || !ripplesLayer) return;
+
+    const raw = (source.textContent || '').replace(/\s+/g, ' ').trim();
+    const sentences = (raw.match(/[^.!?]+[.!?]/g) || [raw])
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!sentences.length) return;
+
+    let currentIndex = 0;
+    quoteEl.textContent = sentences[currentIndex];
+
+    let busy = false;
+    const triggerRipple = (clientX, clientY) => {
+      if (busy) return;
+      busy = true;
+      const rect = section.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      r.style.left = x + 'px';
+      r.style.top = y + 'px';
+      r.style.animation = 'rippleWave 1.2s ease-out forwards';
+      ripplesLayer.appendChild(r);
+
+      const onEnd = () => {
+        r.removeEventListener('animationend', onEnd);
+        r.remove();
+        // advance to next sentence
+        const nextIndex = (currentIndex + 1) % sentences.length;
+        const nextText = sentences[nextIndex];
+        if (window.gsap) {
+          window.gsap.to(quoteEl, {
+            yPercent: -20,
+            opacity: 0,
+            duration: 0.35,
+            ease: 'power3.in',
+            onComplete: () => {
+              quoteEl.textContent = nextText;
+              window.gsap.set(quoteEl, { yPercent: 20 });
+              window.gsap.to(quoteEl, { yPercent: 0, opacity: 1, duration: 0.6, ease: 'power3.out', onComplete: () => {
+                currentIndex = nextIndex;
+                busy = false;
+              }});
+            }
+          });
+        } else {
+          quoteEl.textContent = nextText;
+          currentIndex = nextIndex;
+          busy = false;
+        }
+      };
+      r.addEventListener('animationend', onEnd);
+    };
+
+    section.addEventListener('pointerdown', (e) => {
+      triggerRipple(e.clientX, e.clientY);
     });
   }
 
@@ -180,6 +260,7 @@
     setupParallax();
     setupMagnetic();
     setupCursor();
+    setupPhilosophy();
     animateBlobs();
     setupHeader();
   });
