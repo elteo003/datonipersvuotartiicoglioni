@@ -153,7 +153,10 @@
     });
   }
 
-  // Water Drop Effect with Canvas
+  /**
+   * Water Drop Effect - Effetto goccia d'acqua con onde concentriche
+   * Genera onde trasparenti con bordi bianchi che si propagano dal punto di contatto
+   */
   class WaterDropEffect {
     constructor(canvas, section) {
       this.canvas = canvas;
@@ -162,62 +165,93 @@
       this.waves = [];
       this.animationId = null;
       this.isAnimating = false;
-
+      this.dpr = window.devicePixelRatio || 1;
+      
       this.setupCanvas();
       this.bindEvents();
     }
 
+    /**
+     * Configura il canvas con dimensioni corrette e device pixel ratio
+     */
     setupCanvas() {
       if (!this.canvas.getContext) {
+        console.warn('Canvas not supported in this browser');
         return;
       }
       
       const resizeCanvas = () => {
         const rect = this.section.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
         
-        // Set canvas size accounting for device pixel ratio
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
+        // Imposta dimensioni canvas con DPR per rendering nitido
+        this.canvas.width = rect.width * this.dpr;
+        this.canvas.height = rect.height * this.dpr;
         this.canvas.style.width = rect.width + 'px';
         this.canvas.style.height = rect.height + 'px';
         
-        // Scale context for crisp rendering
-        this.ctx.scale(dpr, dpr);
+        // Scala il context per il device pixel ratio
+        this.ctx.scale(this.dpr, this.dpr);
+        
+        // Salva le dimensioni per calcoli successivi
+        this.canvasWidth = rect.width;
+        this.canvasHeight = rect.height;
       };
 
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
     }
 
+    /**
+     * Crea una nuova onda dal punto di contatto
+     * @param {number} x - Coordinata X del punto di contatto
+     * @param {number} y - Coordinata Y del punto di contatto
+     */
     createWave(x, y) {
+      // Calcola il centro della sezione per la propagazione verso il centro
+      const centerX = this.canvasWidth / 2;
+      const centerY = this.canvasHeight / 2;
+      
+      // Calcola la distanza massima dal punto di contatto al centro
+      const maxDistance = Math.sqrt(
+        Math.pow(centerX - x, 2) + Math.pow(centerY - y, 2)
+      );
+      
       const wave = {
         x: x,
         y: y,
         radius: 0,
-        maxRadius: Math.max(this.canvas.width, this.canvas.height) * 0.4, // Ridotto per essere più visibile
+        maxRadius: maxDistance * 1.2, // 20% in più per coprire tutto
         opacity: 0.9,
-        speed: 3.0 + Math.random() * 1.0, // Più veloce per essere più visibile
-        thickness: 4.0 + Math.random() * 2, // Molto più spesso
+        speed: 2.5 + Math.random() * 0.5, // Velocità variabile
+        thickness: 3.0 + Math.random() * 1.0, // Spessore variabile
         life: 1.0,
-        initialThickness: 0
+        initialThickness: 0,
+        centerX: centerX,
+        centerY: centerY
       };
       
       this.waves.push(wave);
       return wave;
     }
 
+    /**
+     * Disegna un'onda sul canvas
+     * @param {Object} wave - Oggetto onda da disegnare
+     */
     drawWave(wave) {
       this.ctx.save();
+      
+      // Imposta opacità basata sulla vita dell'onda
       this.ctx.globalAlpha = wave.opacity * wave.life;
       
-      // Use solid white color for better visibility
+      // Configura stile per bordi bianchi trasparenti
       this.ctx.strokeStyle = '#ffffff';
       this.ctx.lineWidth = wave.thickness;
       this.ctx.lineCap = 'round';
-      this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-      this.ctx.shadowBlur = 2;
+      this.ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+      this.ctx.shadowBlur = 1;
       
+      // Disegna il cerchio
       this.ctx.beginPath();
       this.ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
       this.ctx.stroke();
@@ -225,29 +259,47 @@
       this.ctx.restore();
     }
 
+    /**
+     * Aggiorna le proprietà di un'onda
+     * @param {Object} wave - Onda da aggiornare
+     * @param {number} deltaTime - Tempo trascorso dall'ultimo frame
+     * @returns {boolean} - True se l'onda è ancora viva
+     */
     updateWave(wave, deltaTime) {
-      wave.radius += wave.speed * deltaTime * 60; // Moltiplicato per 60 per velocità normale
-      wave.life -= deltaTime * 0.3; // Fade più veloce
-      wave.opacity = Math.max(0, wave.life * 0.9);
+      // Espandi l'onda
+      wave.radius += wave.speed * deltaTime * 60;
       
-      // Thickness decreases more gradually
+      // Riduci la vita dell'onda
+      wave.life -= deltaTime * 0.4;
+      
+      // Calcola opacità basata sulla vita
+      wave.opacity = Math.max(0, wave.life * 0.8);
+      
+      // Riduci gradualmente lo spessore
       if (wave.initialThickness === 0) {
         wave.initialThickness = wave.thickness;
       }
-      wave.thickness = Math.max(1.0, wave.initialThickness * wave.life); // Minimo 1px
+      wave.thickness = Math.max(0.5, wave.initialThickness * wave.life);
       
+      // L'onda muore quando la vita finisce o raggiunge il raggio massimo
       return wave.life > 0 && wave.radius < wave.maxRadius;
     }
 
+    /**
+     * Loop di animazione principale
+     */
     animate() {
       if (this.waves.length === 0) {
         this.isAnimating = false;
         return;
       }
 
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      // Pulisci il canvas
+      this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
       
       const deltaTime = 0.016; // ~60fps
+      
+      // Aggiorna e disegna tutte le onde vive
       this.waves = this.waves.filter(wave => {
         const isAlive = this.updateWave(wave, deltaTime);
         if (isAlive) {
@@ -256,6 +308,7 @@
         return isAlive;
       });
 
+      // Continua l'animazione se ci sono onde vive
       if (this.waves.length > 0) {
         this.animationId = requestAnimationFrame(() => this.animate());
       } else {
@@ -263,27 +316,37 @@
       }
     }
 
+    /**
+     * Attiva l'effetto goccia d'acqua
+     * @param {number} x - Coordinata X del punto di contatto
+     * @param {number} y - Coordinata Y del punto di contatto
+     */
     triggerDrop(x, y) {
       if (this.isAnimating) return;
       
       this.isAnimating = true;
       this.createWave(x, y);
       
-      // Use requestAnimationFrame for better performance
+      // Avvia l'animazione
       requestAnimationFrame(() => this.animate());
     }
 
+    /**
+     * Configura gli eventi di interazione
+     */
     bindEvents() {
       const handleInteraction = (e) => {
         e.preventDefault();
         const rect = this.section.getBoundingClientRect();
         let x, y;
         
-        // Handle different event types
+        // Gestisci diversi tipi di eventi
         if (e.touches && e.touches.length > 0) {
+          // Touch event
           x = e.touches[0].clientX - rect.left;
           y = e.touches[0].clientY - rect.top;
         } else {
+          // Mouse event
           x = e.clientX - rect.left;
           y = e.clientY - rect.top;
         }
@@ -291,69 +354,78 @@
         this.triggerDrop(x, y);
       };
 
-      // Support for all interaction types with proper mobile handling
+      // Aggiungi listener per tutti i tipi di interazione
       this.section.addEventListener('click', handleInteraction);
       this.section.addEventListener('touchstart', handleInteraction, { passive: false });
       this.section.addEventListener('pointerdown', handleInteraction);
       
-      // Prevent context menu on long press for mobile
+      // Previeni il menu contestuale su mobile
       this.section.addEventListener('contextmenu', (e) => e.preventDefault());
     }
   }
 
-  // Philosophy section with water drop effect
+  /**
+   * Setup della sezione filosofia con effetto goccia d'acqua
+   * Gestisce il cambio automatico del testo dopo l'animazione delle onde
+   */
   function setupPhilosophy() {
     const section = document.querySelector('.philosophy');
     const quoteEl = document.getElementById('philosophyQuote');
-    const source = document.getElementById('philosophySource');
     const canvas = document.getElementById('waterCanvas');
     
-    if (!section || !quoteEl || !source || !canvas) {
+    if (!section || !quoteEl || !canvas) {
+      console.warn('Missing required elements for philosophy effect');
       return;
     }
 
-    // Check for reduced motion preference
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Array di frasi filosofiche
+    const philosophyQuotes = [
+      "Spazi essenziali, luce calibrata, materiali nobili. Ogni dettaglio è pensato per lasciare che sia l'esperienza a parlare, con naturale fluidità.",
+      "Il silenzio parla più forte delle parole.",
+      "L'eleganza risiede nella semplicità.",
+      "La discrezione è la forma più alta di lusso.",
+      "Ogni momento è un'occasione per creare ricordi indelebili.",
+      "La bellezza nasce dall'armonia tra forma e funzione.",
+      "Il lusso autentico si manifesta nell'attenzione ai dettagli.",
+      "La perfezione si raggiunge quando non c'è più nulla da togliere."
+    ];
 
-    // Parse sentences from source
-    const raw = (source.textContent || '').replace(/\s+/g, ' ').trim();
-    const sentences = (raw.match(/[^.!?]+[.!?]/g) || [raw])
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    if (!sentences.length) return;
+    // Controlla preferenze di movimento ridotto
+    const prefersReducedMotion = window.matchMedia && 
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let currentIndex = 0;
-    quoteEl.textContent = sentences[currentIndex];
-
-    // Initialize water drop effect
-    const waterEffect = new WaterDropEffect(canvas, section);
     let isChangingText = false;
 
-    // Text change function
+    // Inizializza l'effetto goccia d'acqua
+    const waterEffect = new WaterDropEffect(canvas, section);
+
+    /**
+     * Cambia il testo della filosofia
+     */
     const changeText = () => {
       if (isChangingText) return;
       isChangingText = true;
 
-      const nextIndex = (currentIndex + 1) % sentences.length;
-      const nextText = sentences[nextIndex];
+      const nextIndex = (currentIndex + 1) % philosophyQuotes.length;
+      const nextText = philosophyQuotes[nextIndex];
 
       if (window.gsap && !prefersReducedMotion) {
-        // Smooth text transition with GSAP
+        // Transizione fluida con GSAP
         gsap.to(quoteEl, {
-          yPercent: -15,
+          yPercent: -20,
           opacity: 0,
-          skewY: 1,
-          duration: 0.4,
+          skewY: 2,
+          duration: 0.5,
           ease: 'power2.in',
           onComplete: () => {
             quoteEl.textContent = nextText;
-            gsap.set(quoteEl, { yPercent: 15, opacity: 0, skewY: -1 });
+            gsap.set(quoteEl, { yPercent: 20, opacity: 0, skewY: -2 });
             gsap.to(quoteEl, {
               yPercent: 0,
               opacity: 1,
               skewY: 0,
-              duration: 0.6,
+              duration: 0.7,
               ease: 'power2.out',
               onComplete: () => {
                 currentIndex = nextIndex;
@@ -363,26 +435,28 @@
           }
         });
       } else {
-        // Simple text change for reduced motion
+        // Cambio semplice per movimento ridotto
         quoteEl.textContent = nextText;
         currentIndex = nextIndex;
         isChangingText = false;
       }
     };
 
-    // Override animate to handle text change when animation completes
+    /**
+     * Override della funzione animate per gestire il cambio di testo
+     */
     const originalAnimate = waterEffect.animate.bind(waterEffect);
     waterEffect.animate = function() {
       const wasAnimating = this.isAnimating;
       originalAnimate();
       
-      // If animation just finished, change text
+      // Se l'animazione è appena finita, cambia il testo
       if (wasAnimating && !this.isAnimating && this.waves.length === 0) {
-        setTimeout(changeText, 300); // Small delay for better UX
+        setTimeout(changeText, 500); // Delay per migliore UX
       }
     };
 
-    // Reduced motion fallback
+    // Fallback per movimento ridotto
     if (prefersReducedMotion) {
       const indicator = document.createElement('div');
       indicator.className = 'philosophy-indicator';
@@ -397,6 +471,7 @@
         }, 300);
       };
 
+      // Gestisci click per movimento ridotto
       section.addEventListener('click', (e) => {
         const rect = section.getBoundingClientRect();
         const x = e.clientX - rect.left;
