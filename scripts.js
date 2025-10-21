@@ -153,179 +153,256 @@
     });
   }
 
-  // Philosophy ripple + rotating quotes
+  // Water Drop Effect with Canvas
+  class WaterDropEffect {
+    constructor(canvas, section) {
+      this.canvas = canvas;
+      this.section = section;
+      this.ctx = canvas.getContext('2d');
+      this.waves = [];
+      this.animationId = null;
+      this.isAnimating = false;
+
+      this.setupCanvas();
+      this.bindEvents();
+    }
+
+    setupCanvas() {
+      if (!this.canvas.getContext) {
+        return;
+      }
+      
+      const resizeCanvas = () => {
+        const rect = this.section.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        
+        // Set canvas size accounting for device pixel ratio
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = rect.height * dpr;
+        this.canvas.style.width = rect.width + 'px';
+        this.canvas.style.height = rect.height + 'px';
+        
+        // Scale context for crisp rendering
+        this.ctx.scale(dpr, dpr);
+      };
+
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+    }
+
+    createWave(x, y) {
+      const wave = {
+        x: x,
+        y: y,
+        radius: 0,
+        maxRadius: Math.max(this.canvas.width, this.canvas.height) * 0.4, // Ridotto per essere più visibile
+        opacity: 0.9,
+        speed: 3.0 + Math.random() * 1.0, // Più veloce per essere più visibile
+        thickness: 4.0 + Math.random() * 2, // Molto più spesso
+        life: 1.0,
+        initialThickness: 0
+      };
+      
+      this.waves.push(wave);
+      return wave;
+    }
+
+    drawWave(wave) {
+      this.ctx.save();
+      this.ctx.globalAlpha = wave.opacity * wave.life;
+      
+      // Use solid white color for better visibility
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = wave.thickness;
+      this.ctx.lineCap = 'round';
+      this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+      this.ctx.shadowBlur = 2;
+      
+      this.ctx.beginPath();
+      this.ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+      this.ctx.stroke();
+      
+      this.ctx.restore();
+    }
+
+    updateWave(wave, deltaTime) {
+      wave.radius += wave.speed * deltaTime * 60; // Moltiplicato per 60 per velocità normale
+      wave.life -= deltaTime * 0.3; // Fade più veloce
+      wave.opacity = Math.max(0, wave.life * 0.9);
+      
+      // Thickness decreases more gradually
+      if (wave.initialThickness === 0) {
+        wave.initialThickness = wave.thickness;
+      }
+      wave.thickness = Math.max(1.0, wave.initialThickness * wave.life); // Minimo 1px
+      
+      return wave.life > 0 && wave.radius < wave.maxRadius;
+    }
+
+    animate() {
+      if (this.waves.length === 0) {
+        this.isAnimating = false;
+        return;
+      }
+
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      
+      const deltaTime = 0.016; // ~60fps
+      this.waves = this.waves.filter(wave => {
+        const isAlive = this.updateWave(wave, deltaTime);
+        if (isAlive) {
+          this.drawWave(wave);
+        }
+        return isAlive;
+      });
+
+      if (this.waves.length > 0) {
+        this.animationId = requestAnimationFrame(() => this.animate());
+      } else {
+        this.isAnimating = false;
+      }
+    }
+
+    triggerDrop(x, y) {
+      if (this.isAnimating) return;
+      
+      this.isAnimating = true;
+      this.createWave(x, y);
+      
+      // Use requestAnimationFrame for better performance
+      requestAnimationFrame(() => this.animate());
+    }
+
+    bindEvents() {
+      const handleInteraction = (e) => {
+        e.preventDefault();
+        const rect = this.section.getBoundingClientRect();
+        let x, y;
+        
+        // Handle different event types
+        if (e.touches && e.touches.length > 0) {
+          x = e.touches[0].clientX - rect.left;
+          y = e.touches[0].clientY - rect.top;
+        } else {
+          x = e.clientX - rect.left;
+          y = e.clientY - rect.top;
+        }
+        
+        this.triggerDrop(x, y);
+      };
+
+      // Support for all interaction types with proper mobile handling
+      this.section.addEventListener('click', handleInteraction);
+      this.section.addEventListener('touchstart', handleInteraction, { passive: false });
+      this.section.addEventListener('pointerdown', handleInteraction);
+      
+      // Prevent context menu on long press for mobile
+      this.section.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+  }
+
+  // Philosophy section with water drop effect
   function setupPhilosophy() {
     const section = document.querySelector('.philosophy');
     const quoteEl = document.getElementById('philosophyQuote');
     const source = document.getElementById('philosophySource');
-    const ripplesLayer = section ? section.querySelector('.philosophy-ripples') : null;
-    if (!section || !quoteEl || !source || !ripplesLayer) return;
+    const canvas = document.getElementById('waterCanvas');
+    
+    if (!section || !quoteEl || !source || !canvas) {
+      return;
+    }
 
-    // Respect reduced motion while still providing discrete, non-animated feedback
-    const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Parse sentences from source
     const raw = (source.textContent || '').replace(/\s+/g, ' ').trim();
     const sentences = (raw.match(/[^.!?]+[.!?]/g) || [raw])
       .map((s) => s.trim())
       .filter(Boolean);
+
     if (!sentences.length) return;
 
     let currentIndex = 0;
     quoteEl.textContent = sentences[currentIndex];
 
-    let busy = false;
-    const triggerRipple = (clientX, clientY) => {
-      if (busy) return;
-      const rect = section.getBoundingClientRect();
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
+    // Initialize water drop effect
+    const waterEffect = new WaterDropEffect(canvas, section);
+    let isChangingText = false;
 
-      // Reduced motion: provide discrete, non-animated feedback and advance text
-      if (prefersReducedMotion) {
-        const indicator = document.createElement('span');
-        indicator.className = 'ripple-indicator';
-        indicator.style.left = x + 'px';
-        indicator.style.top = y + 'px';
-        ripplesLayer.appendChild(indicator);
+    // Text change function
+    const changeText = () => {
+      if (isChangingText) return;
+      isChangingText = true;
 
-        const nextIndex = (currentIndex + 1) % sentences.length;
-        const nextText = sentences[nextIndex];
-        quoteEl.textContent = nextText;
-        currentIndex = nextIndex;
+      const nextIndex = (currentIndex + 1) % sentences.length;
+      const nextText = sentences[nextIndex];
 
-        // Remove indicator shortly without relying on CSS animation
-        setTimeout(() => indicator.remove(), 180);
-        return;
-      }
-
-      busy = true;
-
-      const RINGS = 4; // multiple concentric waves for realism
-      const DURATION_BASE = 1.35;
-      const STAGGER = 0.12;
-
-      const rings = [];
-      for (let i = 0; i < RINGS; i++) {
-        const ring = document.createElement('span');
-        ring.className = 'ripple';
-        ring.style.left = x + 'px';
-        ring.style.top = y + 'px';
-        ring.style.animation = `rippleWave ${DURATION_BASE + i * 0.15}s ease-out ${i * STAGGER}s forwards`;
-        ring.style.opacity = String(Math.max(0.6, 0.9 - i * 0.15));
-        ripplesLayer.appendChild(ring);
-        rings.push(ring);
-      }
-
-      let ringsCompleted = 0;
-      const markOneDone = () => {
-        ringsCompleted += 1;
-        if (ringsCompleted >= rings.length) {
-          rings.forEach((el) => el.remove());
-          // advance to next sentence
-          const nextIndex = (currentIndex + 1) % sentences.length;
-          const nextText = sentences[nextIndex];
-          if (window.gsap) {
-            window.gsap.to(quoteEl, {
-              // words dissolve via wave: slight skew + mask-like yPercent
-              yPercent: -18,
-              opacity: 0,
-              skewY: 2,
-              duration: 0.45,
-              ease: 'power3.in',
+      if (window.gsap && !prefersReducedMotion) {
+        // Smooth text transition with GSAP
+        gsap.to(quoteEl, {
+          yPercent: -15,
+          opacity: 0,
+          skewY: 1,
+          duration: 0.4,
+          ease: 'power2.in',
+          onComplete: () => {
+            quoteEl.textContent = nextText;
+            gsap.set(quoteEl, { yPercent: 15, opacity: 0, skewY: -1 });
+            gsap.to(quoteEl, {
+              yPercent: 0,
+              opacity: 1,
+              skewY: 0,
+              duration: 0.6,
+              ease: 'power2.out',
               onComplete: () => {
-                quoteEl.textContent = nextText;
-                window.gsap.set(quoteEl, { yPercent: 18, opacity: 0, skewY: -2 });
-                window.gsap.to(quoteEl, {
-                  yPercent: 0,
-                  opacity: 1,
-                  skewY: 0,
-                  duration: 0.7,
-                  ease: 'power3.out',
-                  onComplete: () => {
-                    currentIndex = nextIndex;
-                    busy = false;
-                  }
-                });
+                currentIndex = nextIndex;
+                isChangingText = false;
               }
             });
-          } else {
-            quoteEl.textContent = nextText;
-            currentIndex = nextIndex;
-            busy = false;
           }
-        }
-      };
-
-      // Ensure cleanup if animationend does not fire
-      const failSafeId = setTimeout(() => {
-        rings.forEach((el) => el.remove());
-        markOneDone();
-      }, (DURATION_BASE + (RINGS - 1) * 0.15 + STAGGER + 0.3) * 1000);
-
-      rings.forEach((el) => {
-        el.addEventListener('animationend', () => {
-          el.remove();
-          markOneDone();
-        }, { once: true });
-      });
+        });
+      } else {
+        // Simple text change for reduced motion
+        quoteEl.textContent = nextText;
+        currentIndex = nextIndex;
+        isChangingText = false;
+      }
     };
 
-    section.addEventListener('pointerdown', (e) => {
-      triggerRipple(e.clientX, e.clientY);
-    });
+    // Override animate to handle text change when animation completes
+    const originalAnimate = waterEffect.animate.bind(waterEffect);
+    waterEffect.animate = function() {
+      const wasAnimating = this.isAnimating;
+      originalAnimate();
+      
+      // If animation just finished, change text
+      if (wasAnimating && !this.isAnimating && this.waves.length === 0) {
+        setTimeout(changeText, 300); // Small delay for better UX
+      }
+    };
 
-    // Droplet fall-in + auto ripple on enter viewport
-    if (window.gsap && window.ScrollTrigger && !prefersReducedMotion) {
-      const droplet = document.createElement('span');
-      droplet.className = 'droplet';
-      droplet.setAttribute('aria-hidden', 'true');
-      ripplesLayer.appendChild(droplet);
+    // Reduced motion fallback
+    if (prefersReducedMotion) {
+      const indicator = document.createElement('div');
+      indicator.className = 'philosophy-indicator';
+      section.appendChild(indicator);
 
-      const tl = window.gsap.timeline({ paused: true });
-      // Start above section center and fall down with gravity-like ease
-      tl.set(droplet, {
-        x: () => section.getBoundingClientRect().width * 0.5,
-        y: -60,
-        scale: 1,
-        opacity: 0,
-      })
-      .to(droplet, {
-        opacity: 1,
-        duration: 0.2,
-        ease: 'power1.out'
-      })
-      .to(droplet, {
-        y: () => section.getBoundingClientRect().height * 0.45,
-        duration: 0.9,
-        ease: 'power2.in'
-      })
-      // impact: quick squash-stretch and then hide
-      .to(droplet, {
-        scaleX: 1.2,
-        scaleY: 0.7,
-        duration: 0.08,
-        ease: 'power1.in'
-      })
-      .to(droplet, {
-        scaleX: 0.9,
-        scaleY: 1.1,
-        duration: 0.12,
-        ease: 'power1.out'
-      })
-      .to(droplet, { opacity: 0, duration: 0.15 }, '>-0.05')
-      // trigger ripple at impact position
-      .add(() => {
+      const showIndicator = (x, y) => {
+        indicator.style.left = x + 'px';
+        indicator.style.top = y + 'px';
+        indicator.style.opacity = '1';
+        setTimeout(() => {
+          indicator.style.opacity = '0';
+        }, 300);
+      };
+
+      section.addEventListener('click', (e) => {
         const rect = section.getBoundingClientRect();
-        const cx = rect.left + rect.width * 0.5;
-        const cy = rect.top + rect.height * 0.45;
-        triggerRipple(cx, cy);
-      }, '>-0.1');
-
-      window.ScrollTrigger.create({
-        trigger: section,
-        start: 'top 70%',
-        once: true,
-        onEnter: () => tl.play()
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        showIndicator(x, y);
+        changeText();
       });
     }
   }
@@ -364,14 +441,28 @@
   }
 
   // Kickoff
-  window.addEventListener('load', () => {
-    splitHeadlines();
-    setupReveals();
-    setupParallax();
-    setupMagnetic();
-    setupCursor();
-    setupPhilosophy();
-    animateBlobs();
-    setupHeader();
-  });
+  function initializeApp() {
+    try {
+      splitHeadlines();
+      setupReveals();
+      setupParallax();
+      setupMagnetic();
+      setupCursor();
+      setupPhilosophy();
+      animateBlobs();
+      setupHeader();
+    } catch (error) {
+      console.error('Error during initialization:', error);
+    }
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  } else {
+    initializeApp();
+  }
+
+  // Also try on window load as backup
+  window.addEventListener('load', initializeApp);
 })();
