@@ -757,11 +757,20 @@ body,
 .h2.headline {
   opacity: 1 !important;
   transform: none !important;
+  visibility: visible !important;
 }
 
 .h2.headline.split {
   opacity: 1 !important;
   transform: none !important;
+  visibility: visible !important;
+}
+
+/* Forza visibilità di tutti i titoli */
+.h2 {
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
 }
 
 /* Accessibility: reduce motion */
@@ -818,9 +827,9 @@ body::-webkit-scrollbar {
   flex-direction: column;
   gap: 1.5rem;
   align-items: center;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
+  pointer-events: all;
+  opacity: 1;
+  visibility: visible;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 

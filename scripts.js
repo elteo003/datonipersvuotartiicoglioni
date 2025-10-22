@@ -58,6 +58,11 @@
   function splitHeadlines() {
     if (!window.SplitType) return;
     document.querySelectorAll('.headline').forEach((el) => {
+      // Assicurati che l'elemento sia visibile prima di applicare SplitType
+      el.style.opacity = '1';
+      el.style.visibility = 'visible';
+      el.style.transform = 'none';
+      
       const instance = new window.SplitType(el, { types: 'lines, words' });
       gsap.set(instance.lines, { overflow: 'hidden' });
       gsap.from(instance.words, { yPercent: 120, opacity: 0, duration: 1.1, ease: 'power4.out', stagger: { each: 0.035 }, scrollTrigger: { trigger: el, start: 'top 80%' } });
@@ -545,12 +550,12 @@
       return;
     }
 
-    // Show navigation only on desktop (≥768px)
+    // Show navigation on all devices for now
     function checkViewport() {
       if (window.innerWidth >= 768) {
         dotNav.classList.add('visible');
       } else {
-        dotNav.classList.remove('visible');
+        dotNav.classList.add('visible'); // Forza visibilità anche su mobile per debug
       }
     }
 
@@ -668,9 +673,30 @@
   }
 
 
+  // Fallback per assicurare visibilità
+  function ensureVisibility() {
+    // Forza visibilità di tutti i titoli
+    document.querySelectorAll('.h2, .h2.headline').forEach(el => {
+      el.style.opacity = '1';
+      el.style.visibility = 'visible';
+      el.style.transform = 'none';
+    });
+    
+    // Forza visibilità della dot navigation
+    const dotNav = document.querySelector('.dot-navigation');
+    if (dotNav) {
+      dotNav.style.opacity = '1';
+      dotNav.style.visibility = 'visible';
+      dotNav.classList.add('visible');
+    }
+  }
+
   // Kickoff
   function initializeApp() {
     try {
+      // Prima assicurati che tutto sia visibile
+      ensureVisibility();
+      
       splitHeadlines();
       setupReveals();
       setupParallax();
@@ -680,8 +706,13 @@
       animateBlobs();
       setupHeader();
       setupDotNavigation();
+      
+      // Fallback finale
+      setTimeout(ensureVisibility, 1000);
     } catch (error) {
       console.error('Error during initialization:', error);
+      // Fallback in caso di errore
+      ensureVisibility();
     }
   }
 
