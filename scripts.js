@@ -15,15 +15,100 @@
   // Smooth scroll with Lenis
   let lenis;
   if (window.Lenis) {
-    lenis = new window.Lenis({ smoothWheel: true, smoothTouch: false });
+    lenis = new window.Lenis({ 
+      smoothWheel: true, 
+      smoothTouch: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+      infinite: false,
+      gestureOrientation: 'vertical',
+      normalizeWheel: true,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
+    });
+    
     function raf(time) {
       lenis.raf(time);
       window.requestAnimationFrame(raf);
     }
     window.requestAnimationFrame(raf);
+    
     if (window.ScrollTrigger) {
       lenis.on('scroll', () => window.ScrollTrigger.update());
     }
+    
+    // Fallback per dispositivi che non supportano Lenis
+    if (!lenis) {
+      console.warn('Lenis not available, using native smooth scroll');
+      document.documentElement.style.scrollBehavior = 'smooth';
+    }
+  } else {
+    // Fallback completo se Lenis non è disponibile
+    console.warn('Lenis library not loaded, using native smooth scroll');
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    // Aggiungi supporto per scroll con mouse wheel personalizzato
+    let isScrolling = false;
+    let scrollTimeout;
+    
+    function handleWheelScroll(e) {
+      if (isScrolling) return;
+      
+      isScrolling = true;
+      e.preventDefault();
+      
+      const delta = e.deltaY;
+      const scrollAmount = delta * 0.5; // Riduci la velocità per scroll più fluido
+      
+      window.scrollBy({
+        top: scrollAmount,
+        behavior: 'smooth'
+      });
+      
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 50);
+    }
+    
+    // Aggiungi listener per mouse wheel
+    window.addEventListener('wheel', handleWheelScroll, { passive: false });
+    
+    // Supporto per touchpad e gesture
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let isTouchScrolling = false;
+    
+    function handleTouchStart(e) {
+      if (e.touches.length === 1) {
+        touchStartY = e.touches[0].clientY;
+        touchStartX = e.touches[0].clientX;
+        isTouchScrolling = false;
+      }
+    }
+    
+    function handleTouchMove(e) {
+      if (e.touches.length === 1 && !isTouchScrolling) {
+        const touchY = e.touches[0].clientY;
+        const touchX = e.touches[0].clientX;
+        const deltaY = touchStartY - touchY;
+        const deltaX = touchStartX - touchX;
+        
+        // Se il movimento è principalmente verticale, gestisci lo scroll
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 10) {
+          isTouchScrolling = true;
+          e.preventDefault();
+          
+          window.scrollBy({
+            top: deltaY * 0.8,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+    
+    // Aggiungi listener per touch
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
   }
 
   // Preloader timeline
