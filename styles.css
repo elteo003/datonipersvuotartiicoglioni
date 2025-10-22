@@ -753,7 +753,6 @@ body,
 
 /* ========== CUSTOM SCROLLBAR HIDING ========== */
 html {
-  overflow: hidden;
   scrollbar-width: none;
   /* Firefox */
   -ms-overflow-style: none;
@@ -766,7 +765,6 @@ html::-webkit-scrollbar {
 }
 
 body {
-  overflow-y: auto;
   scrollbar-width: none;
   /* Firefox */
   -ms-overflow-style: none;
