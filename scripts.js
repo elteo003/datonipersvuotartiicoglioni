@@ -233,10 +233,10 @@
         x: x,
         y: y,
         radius: 0,
-        maxRadius: maxDistance * 1.2, // 20% in più per coprire tutto
-        opacity: 0.9,
-        speed: 2.5 + Math.random() * 0.5, // Velocità variabile
-        thickness: 3.0 + Math.random() * 1.0, // Spessore variabile
+        maxRadius: maxDistance * 2.5, // Molto più grande per coprire tutta la scritta
+        opacity: 0.8,
+        speed: 1.5 + Math.random() * 0.3, // Velocità più lenta per effetto più duraturo
+        thickness: 4.0 + Math.random() * 2.0, // Spessore maggiore
         life: 1.0,
         initialThickness: 0,
         centerX: centerX,
@@ -261,8 +261,8 @@
       this.ctx.strokeStyle = '#ffffff';
       this.ctx.lineWidth = wave.thickness;
       this.ctx.lineCap = 'round';
-      this.ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
-      this.ctx.shadowBlur = 1;
+      this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+      this.ctx.shadowBlur = 3;
 
       // Disegna il cerchio
       this.ctx.beginPath();
@@ -282,8 +282,8 @@
       // Espandi l'onda
       wave.radius += wave.speed * deltaTime * 60;
 
-      // Riduci la vita dell'onda
-      wave.life -= deltaTime * 0.4;
+      // Riduci la vita dell'onda più lentamente
+      wave.life -= deltaTime * 0.25;
 
       // Calcola opacità basata sulla vita
       wave.opacity = Math.max(0, wave.life * 0.8);

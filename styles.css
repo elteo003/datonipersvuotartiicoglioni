@@ -356,27 +356,31 @@ body {
 }
 
 .btn.primary {
-  background: var(--gradient-primary);
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+  background: color-mix(in oklab, var(--accent-1) 15%, var(--bg-elev));
+  border-color: color-mix(in oklab, var(--accent-1) 30%, var(--line));
+  color: var(--accent-1);
+  box-shadow: var(--shadow-medium);
 }
 
 .btn.primary:hover {
-  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.4);
-  filter: brightness(1.1);
+  background: color-mix(in oklab, var(--accent-1) 25%, var(--bg-elev));
+  border-color: var(--accent-1);
+  color: var(--text);
+  box-shadow: var(--shadow-strong);
 }
 
 .btn.secondary {
-  background: var(--gradient-secondary);
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 8px 32px rgba(6, 182, 212, 0.3);
+  background: color-mix(in oklab, var(--accent-2) 15%, var(--bg-elev));
+  border-color: color-mix(in oklab, var(--accent-2) 30%, var(--line));
+  color: var(--accent-2);
+  box-shadow: var(--shadow-medium);
 }
 
 .btn.secondary:hover {
-  box-shadow: 0 12px 40px rgba(6, 182, 212, 0.4);
-  filter: brightness(1.1);
+  background: color-mix(in oklab, var(--accent-2) 25%, var(--bg-elev));
+  border-color: var(--accent-2);
+  color: var(--text);
+  box-shadow: var(--shadow-strong);
 }
 
 .btn.ghost {
@@ -731,6 +735,22 @@ body,
 .line {
   display: block;
   overflow: hidden;
+}
+
+/* Split text animation */
+.split {
+  opacity: 1;
+}
+
+.split .line {
+  display: block;
+  overflow: hidden;
+}
+
+.split .word {
+  display: inline-block;
+  transform: translateY(100%);
+  opacity: 0;
 }
 
 /* Accessibility: reduce motion */
