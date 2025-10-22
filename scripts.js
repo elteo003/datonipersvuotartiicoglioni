@@ -65,7 +65,17 @@
       
       const instance = new window.SplitType(el, { types: 'lines, words' });
       gsap.set(instance.lines, { overflow: 'hidden' });
-      gsap.from(instance.words, { yPercent: 120, opacity: 0, duration: 1.1, ease: 'power4.out', stagger: { each: 0.035 }, scrollTrigger: { trigger: el, start: 'top 80%' } });
+      
+      // Applica animazione solo se l'elemento è in viewport
+      const rect = el.getBoundingClientRect();
+      const isInView = rect.top < window.innerHeight && rect.bottom > 0;
+      
+      if (isInView) {
+        gsap.from(instance.words, { yPercent: 120, opacity: 0, duration: 1.1, ease: 'power4.out', stagger: { each: 0.035 }, scrollTrigger: { trigger: el, start: 'top 80%' } });
+      } else {
+        // Se non è in viewport, mostra subito
+        gsap.set(instance.words, { yPercent: 0, opacity: 1 });
+      }
     });
   }
 
@@ -676,10 +686,19 @@
   // Fallback per assicurare visibilità
   function ensureVisibility() {
     // Forza visibilità di tutti i titoli
-    document.querySelectorAll('.h2, .h2.headline').forEach(el => {
+    document.querySelectorAll('.h2, .h2.headline, h2').forEach(el => {
       el.style.opacity = '1';
       el.style.visibility = 'visible';
       el.style.transform = 'none';
+      el.style.display = 'block';
+    });
+    
+    // Forza visibilità di tutti gli elementi con classe headline
+    document.querySelectorAll('.headline').forEach(el => {
+      el.style.opacity = '1';
+      el.style.visibility = 'visible';
+      el.style.transform = 'none';
+      el.style.display = 'block';
     });
     
     // Forza visibilità della dot navigation
@@ -715,6 +734,20 @@
       ensureVisibility();
     }
   }
+
+  // Fallback immediato
+  function immediateFallback() {
+    // Forza visibilità immediata di tutti i titoli
+    document.querySelectorAll('h2, .h2, .headline').forEach(el => {
+      el.style.opacity = '1';
+      el.style.visibility = 'visible';
+      el.style.transform = 'none';
+      el.style.display = 'block';
+    });
+  }
+
+  // Esegui fallback immediato
+  immediateFallback();
 
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
