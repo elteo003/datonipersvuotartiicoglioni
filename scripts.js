@@ -166,7 +166,7 @@
       this.animationId = null;
       this.isAnimating = false;
       this.dpr = window.devicePixelRatio || 1;
-      
+
       this.setupCanvas();
       this.bindEvents();
     }
@@ -179,19 +179,19 @@
         console.warn('Canvas not supported in this browser');
         return;
       }
-      
+
       const resizeCanvas = () => {
         const rect = this.section.getBoundingClientRect();
-        
+
         // Imposta dimensioni canvas con DPR per rendering nitido
         this.canvas.width = rect.width * this.dpr;
         this.canvas.height = rect.height * this.dpr;
         this.canvas.style.width = rect.width + 'px';
         this.canvas.style.height = rect.height + 'px';
-        
+
         // Scala il context per il device pixel ratio
         this.ctx.scale(this.dpr, this.dpr);
-        
+
         // Salva le dimensioni per calcoli successivi
         this.canvasWidth = rect.width;
         this.canvasHeight = rect.height;
@@ -210,12 +210,12 @@
       // Calcola il centro della sezione per la propagazione verso il centro
       const centerX = this.canvasWidth / 2;
       const centerY = this.canvasHeight / 2;
-      
+
       // Calcola la distanza massima dal punto di contatto al centro
       const maxDistance = Math.sqrt(
         Math.pow(centerX - x, 2) + Math.pow(centerY - y, 2)
       );
-      
+
       const wave = {
         x: x,
         y: y,
@@ -229,7 +229,7 @@
         centerX: centerX,
         centerY: centerY
       };
-      
+
       this.waves.push(wave);
       return wave;
     }
@@ -240,22 +240,22 @@
      */
     drawWave(wave) {
       this.ctx.save();
-      
+
       // Imposta opacità basata sulla vita dell'onda
       this.ctx.globalAlpha = wave.opacity * wave.life;
-      
+
       // Configura stile per bordi bianchi trasparenti
       this.ctx.strokeStyle = '#ffffff';
       this.ctx.lineWidth = wave.thickness;
       this.ctx.lineCap = 'round';
       this.ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
       this.ctx.shadowBlur = 1;
-      
+
       // Disegna il cerchio
       this.ctx.beginPath();
       this.ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
       this.ctx.stroke();
-      
+
       this.ctx.restore();
     }
 
@@ -268,19 +268,19 @@
     updateWave(wave, deltaTime) {
       // Espandi l'onda
       wave.radius += wave.speed * deltaTime * 60;
-      
+
       // Riduci la vita dell'onda
       wave.life -= deltaTime * 0.4;
-      
+
       // Calcola opacità basata sulla vita
       wave.opacity = Math.max(0, wave.life * 0.8);
-      
+
       // Riduci gradualmente lo spessore
       if (wave.initialThickness === 0) {
         wave.initialThickness = wave.thickness;
       }
       wave.thickness = Math.max(0.5, wave.initialThickness * wave.life);
-      
+
       // L'onda muore quando la vita finisce o raggiunge il raggio massimo
       return wave.life > 0 && wave.radius < wave.maxRadius;
     }
@@ -296,9 +296,9 @@
 
       // Pulisci il canvas
       this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-      
+
       const deltaTime = 0.016; // ~60fps
-      
+
       // Aggiorna e disegna tutte le onde vive
       this.waves = this.waves.filter(wave => {
         const isAlive = this.updateWave(wave, deltaTime);
@@ -323,10 +323,10 @@
      */
     triggerDrop(x, y) {
       if (this.isAnimating) return;
-      
+
       this.isAnimating = true;
       this.createWave(x, y);
-      
+
       // Avvia l'animazione
       requestAnimationFrame(() => this.animate());
     }
@@ -339,7 +339,7 @@
         e.preventDefault();
         const rect = this.section.getBoundingClientRect();
         let x, y;
-        
+
         // Gestisci diversi tipi di eventi
         if (e.touches && e.touches.length > 0) {
           // Touch event
@@ -350,7 +350,7 @@
           x = e.clientX - rect.left;
           y = e.clientY - rect.top;
         }
-        
+
         this.triggerDrop(x, y);
       };
 
@@ -358,7 +358,7 @@
       this.section.addEventListener('click', handleInteraction);
       this.section.addEventListener('touchstart', handleInteraction, { passive: false });
       this.section.addEventListener('pointerdown', handleInteraction);
-      
+
       // Previeni il menu contestuale su mobile
       this.section.addEventListener('contextmenu', (e) => e.preventDefault());
     }
@@ -372,7 +372,7 @@
     const section = document.querySelector('.philosophy');
     const quoteEl = document.getElementById('philosophyQuote');
     const canvas = document.getElementById('waterCanvas');
-    
+
     if (!section || !quoteEl || !canvas) {
       console.warn('Missing required elements for philosophy effect');
       return;
@@ -391,7 +391,7 @@
     ];
 
     // Controlla preferenze di movimento ridotto
-    const prefersReducedMotion = window.matchMedia && 
+    const prefersReducedMotion = window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let currentIndex = 0;
@@ -446,10 +446,10 @@
      * Override della funzione animate per gestire il cambio di testo
      */
     const originalAnimate = waterEffect.animate.bind(waterEffect);
-    waterEffect.animate = function() {
+    waterEffect.animate = function () {
       const wasAnimating = this.isAnimating;
       originalAnimate();
-      
+
       // Se l'animazione è appena finita, cambia il testo
       if (wasAnimating && !this.isAnimating && this.waves.length === 0) {
         setTimeout(changeText, 500); // Delay per migliore UX
@@ -515,6 +515,145 @@
     }, { passive: true });
   }
 
+  // Dot Navigation System
+  function setupDotNavigation() {
+    const dotNav = document.querySelector('.dot-navigation');
+    const dotItems = document.querySelectorAll('.dot-item');
+    const sections = [
+      { id: 'home', element: document.getElementById('home') },
+      { id: 'philosophy', element: document.getElementById('philosophy') },
+      { id: 'servizi', element: document.getElementById('servizi') },
+      { id: 'esperienza', element: document.getElementById('esperienza') },
+      { id: 'contatti', element: document.getElementById('contatti') }
+    ];
+
+    if (!dotNav || !dotItems.length || !sections.every(s => s.element)) {
+      console.warn('Dot navigation elements not found');
+      return;
+    }
+
+    // Show navigation only on desktop (≥768px)
+    function checkViewport() {
+      if (window.innerWidth >= 768) {
+        dotNav.classList.add('visible');
+      } else {
+        dotNav.classList.remove('visible');
+      }
+    }
+
+    // Initial check
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+
+    // Smooth scroll to section
+    function scrollToSection(sectionId) {
+      const section = sections.find(s => s.id === sectionId);
+      if (!section || !section.element) return;
+
+      section.element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+
+    // Update active dot based on scroll position
+    function updateActiveDot() {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      let activeSection = null;
+      let minDistance = Infinity;
+
+      sections.forEach(({ element, id }) => {
+        if (!element) return;
+
+        const rect = element.getBoundingClientRect();
+        const elementTop = rect.top + scrollY;
+        const elementBottom = elementTop + rect.height;
+
+        // Calculate distance from viewport center
+        const viewportCenter = scrollY + windowHeight / 2;
+        const elementCenter = elementTop + rect.height / 2;
+        const distance = Math.abs(viewportCenter - elementCenter);
+
+        // Check if section is in viewport
+        const isInView = rect.top <= windowHeight / 2 && rect.bottom >= windowHeight / 2;
+
+        if (isInView && distance < minDistance) {
+          minDistance = distance;
+          activeSection = id;
+        }
+      });
+
+      // If no section is in view, find the closest one
+      if (!activeSection) {
+        sections.forEach(({ element, id }) => {
+          if (!element) return;
+
+          const rect = element.getBoundingClientRect();
+          const elementTop = rect.top + scrollY;
+          const elementBottom = elementTop + rect.height;
+          const viewportCenter = scrollY + windowHeight / 2;
+
+          // Calculate distance to viewport center
+          let distance;
+          if (viewportCenter < elementTop) {
+            distance = elementTop - viewportCenter;
+          } else if (viewportCenter > elementBottom) {
+            distance = viewportCenter - elementBottom;
+          } else {
+            distance = 0; // Section is in view
+          }
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            activeSection = id;
+          }
+        });
+      }
+
+      // Update active dot
+      dotItems.forEach(dot => {
+        const sectionId = dot.getAttribute('data-section');
+        if (sectionId === activeSection) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    }
+
+    // Add click handlers
+    dotItems.forEach(dot => {
+      dot.addEventListener('click', (e) => {
+        e.preventDefault();
+        const sectionId = dot.getAttribute('data-section');
+        scrollToSection(sectionId);
+      });
+    });
+
+    // Throttled scroll handler
+    let scrollTimeout;
+    function handleScroll() {
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+      scrollTimeout = setTimeout(updateActiveDot, 10);
+    }
+
+    // Listen for scroll events
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Initial update
+    updateActiveDot();
+
+    // Update on Lenis scroll if available
+    if (window.Lenis && lenis) {
+      lenis.on('scroll', updateActiveDot);
+    }
+  }
+
   // Kickoff
   function initializeApp() {
     try {
@@ -526,6 +665,7 @@
       setupPhilosophy();
       animateBlobs();
       setupHeader();
+      setupDotNavigation();
     } catch (error) {
       console.error('Error during initialization:', error);
     }

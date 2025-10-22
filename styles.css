@@ -537,6 +537,123 @@ body,
   align-self: stretch;
 }
 
+/* ========== CUSTOM SCROLLBAR HIDING ========== */
+html {
+  overflow: hidden;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+}
+
+html::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+body {
+  overflow-y: auto;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+}
+
+body::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* ========== DOT NAVIGATION ========== */
+.dot-navigation {
+  position: fixed;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.dot-navigation.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+.dot-item {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  pointer-events: all;
+}
+
+.dot-item::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(127, 90, 240, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.dot-item:hover {
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dot-item:hover::before {
+  width: 24px;
+  height: 24px;
+  background: rgba(127, 90, 240, 0.1);
+}
+
+.dot-item.active {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.2);
+  box-shadow: 0 0 20px rgba(127, 90, 240, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dot-item.active::before {
+  width: 28px;
+  height: 28px;
+  background: rgba(127, 90, 240, 0.15);
+  box-shadow: 0 0 30px rgba(127, 90, 240, 0.2);
+}
+
+/* Glassmorphism effect for dot navigation */
+.dot-navigation::before {
+  content: '';
+  position: absolute;
+  top: -1rem;
+  left: -1rem;
+  right: -1rem;
+  bottom: -1rem;
+  background: rgba(11, 11, 11, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  z-index: -1;
+  opacity: 0.8;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 980px) {
   .cards {
@@ -564,6 +681,12 @@ body,
   .water-canvas {
     opacity: 0.8;
     /* Slightly more subtle on mobile */
+  }
+}
+
+@media (max-width: 767px) {
+  .dot-navigation {
+    display: none;
   }
 }
 
